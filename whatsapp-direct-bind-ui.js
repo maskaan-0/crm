@@ -141,5 +141,5 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
   window.addEventListener('load',install);
   setTimeout(install,300);setTimeout(install,900);setTimeout(install,1800);setTimeout(install,3500);setTimeout(install,6500);
-  window.HabibDirectMetaBind=directBind;
+  window.Maskaan-0DirectMetaBind=directBind;
 })();
