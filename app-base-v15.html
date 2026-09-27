@@ -291,6 +291,7 @@ window.fbAsyncInit = function(){
 <div class="page-header"><div><div class="page-title">إدارة <span>العقارات</span></div><div class="page-sub" id="propertiesSub">جاري التحميل...</div></div>
 <div style="display:flex;gap:10px;flex-wrap:wrap">
 <button class="btn-secondary" onclick="exportProperties()">📤 تصدير Excel</button>
+<button class="btn-secondary" onclick="importAwtadProperties()" id="btnImportAwtad">🔄 استيراد من اوتاد</button>
 <button class="btn-gold" onclick="openCreateModal('mProperty')">+ إضافة عقار</button>
 </div></div>
 <div class="archive-toggle"><button class="active" onclick="setPropView('active',this)">📋 النشطة <span class="count" id="cntPropActive">0</span></button><button onclick="setPropView('sold',this)">🔴 المباعة <span class="count" id="cntPropSold">0</span></button><button onclick="setPropView('archived',this)">📦 المؤرشفة</button></div>
@@ -2713,6 +2714,49 @@ async function saveInlinePropertyOwner(){
 }
 async function saveProperty(){const t=$('pTitle').value.trim(),a=$('pArea').value.trim(),pr=parseNum($('pPrice').value),ownerId=$('pOwnerId').value||null;if(!t||!a||!pr){showToast('⚠️ العنوان والمنطقة والسعر مطلوبة','error');return}if(!window.editingProperty&&!ownerId){showToast('⚠️ اختر المالك أو أضف مالكاً جديداً من نفس الشاشة','error');return}try{const cid=await ensureCompany();const data={title:t,type:$('pType').value,area:a,price:pr,status:$('pStatus').value,bedrooms:parseInt($('pBeds').value)||null,bathrooms:parseInt($('pBaths').value)||null,land_size:parseFloat($('pLandSize').value)||null,built_size:parseFloat($('pBuiltSize').value)||null,description:$('pDesc').value.trim()||null,public_details:$('pPublicDetails')?$('pPublicDetails').value.trim()||null:null,map_url:$('pMapUrl')?$('pMapUrl').value.trim()||null:null,owner_id:ownerId,...(canViewFinancials()?{owner_net:parseNum($('pOwnerNet').value)||null}:{}),images:currentPropertyImages.length?currentPropertyImages:null,wilayat:$('pWilayat')?$('pWilayat').value.trim()||null:null,source_type:$('pSourceType')?$('pSourceType').value||null:null,marketing_status:$('pMarketingStatus')?$('pMarketingStatus').value||null:null,...(isOwner()?{sourced_by:$('pSourcedBy')?.value||currentUser.id}:{}),...(canViewFinancials()?{expected_commission:parseFloat($('pExpectedCommission')?$('pExpectedCommission').value:0)||null}:{})};
 var pDate=$('pCreatedDate').value;if(pDate){data.created_at=new Date(pDate+'T12:00:00').toISOString();}let r;if(window.editingProperty){console.log('[Update Property] id:',window.editingProperty,'data:',data);r=await crmDataFrom('properties').update(data).eq('id',window.editingProperty);console.log('[Update Property] result:',r);if(!r.error)await logSystemActivity('edit','property',window.editingProperty,'تعديل العقار: '+t)}else{data.company_id=cid;data.added_by=currentUser.id;data.archived=false;r=await crmDataFrom('properties').insert(data).select().single();if(!r.error)await logSystemActivity('create','property',r.data.id,'إضافة عقار: '+t)}if(r.error)throw r.error;closeModal('mProperty');showToast('✅ تم الحفظ','success');['pTitle','pArea','pPrice','pBeds','pBaths','pLandSize','pBuiltSize','pDesc','pOwnerNet','pWilayat','pExpectedCommission'].forEach(i=>{var e=$(i);if(e)e.value=''});window.editingProperty=null;currentPropertyImages=[];loadProperties();loadDashboard()}catch(err){console.error('[Save Property]',err);showToast('خطأ: '+err.message,'error')}}
+const AWTAD_IMPORT_URL='https://script.google.com/macros/s/AKfycbz0QPRz1P_Q_pNHLS3fSlcLg_SvWAbWpIXLYnvgTq2bHAUkA0r0ImVwbb8vpVUXRlI8CQ/exec';
+function awtadMapType(t){const m={'Villa':'villa','Apartment':'apartment','House':'house','Land':'land','Townhouse':'townhouse','Twin Villa':'twin_villa','Penthouse':'penthouse','Building':'building'};return m[String(t||'').trim()]||'other'}
+async function importAwtadProperties(){
+  const btn=$('btnImportAwtad');if(btn){btn.disabled=true;btn.textContent='⏳ جاري الاستيراد...'}
+  try{
+    const cid=await ensureCompany();
+    const res=await fetch(AWTAD_IMPORT_URL+'?t='+Date.now(),{method:'GET',cache:'no-store'});
+    if(!res.ok)throw new Error('تعذر الاتصال بموقع اوتاد (HTTP '+res.status+')');
+    const rows=await res.json();
+    if(!Array.isArray(rows)||!rows.length){showToast('لا توجد عقارات في المصدر','error');return}
+    const extIds=rows.map(r=>'AWTAD-'+(r.id||r.rowIndex)).filter(Boolean);
+    const existing=await crmDataFrom('properties').select('property_code').eq('company_id',cid).in('property_code',extIds);
+    if(existing.error)throw existing.error;
+    const existingCodes=new Set((existing.data||[]).map(x=>x.property_code));
+    let imported=0,skipped=0,failed=0;
+    for(const row of rows){
+      const code='AWTAD-'+(row.id||row.rowIndex);
+      if(existingCodes.has(code)){skipped++;continue}
+      const images=Array.isArray(row.images)?row.images.filter(u=>typeof u==='string'&&u.startsWith('http')).map((u,i)=>({url:u,cover:i===0})):[];
+      const payload={
+        company_id:cid,added_by:currentUser.id,archived:false,
+        property_code:code,
+        title:String(row.title||'').trim()||'عقار مستورد',
+        type:awtadMapType(row.propertyType),
+        area:String(row.location||'').trim()||'غير محدد',
+        price:parseFloat(row.price)||0,
+        bedrooms:parseInt(row.bedrooms)||null,
+        bathrooms:parseInt(row.bathrooms)||null,
+        land_size:parseFloat(row.landSize)||null,
+        description:String(row.description||'').trim()||null,
+        images:images.length?images:null,
+        status:'available',
+        source_type:'agency',
+        marketing_status:'ready_to_advertise'
+      };
+      const r=await crmDataFrom('properties').insert(payload);
+      if(r.error){console.error('[Awtad Import]',r.error);failed++}else imported++;
+    }
+    showToast('✅ تم استيراد '+imported+' عقاراً · تجاهل '+skipped+' مكرر'+(failed?' · فشل '+failed:''),imported?'success':'error');
+    loadProperties();loadDashboard();
+  }catch(err){console.error('[Awtad Import]',err);showToast('خطأ في الاستيراد: '+err.message,'error')}
+  finally{if(btn){btn.disabled=false;btn.textContent='🔄 استيراد من اوتاد'}}
+}
 window.viewingProperty = null;
 async function viewProperty(id){
   try{
