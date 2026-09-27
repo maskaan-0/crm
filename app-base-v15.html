@@ -204,15 +204,13 @@ window.fbAsyncInit = function(){
 <button class="qa-btn" onclick="openCreateModal('mTask')">⏰ مهمة</button>
 </div></div>
 
-<div class="dash-focus-head"><div><div class="dash-focus-title">🎯 ماذا يحتاج شغلك الآن؟</div><div class="dash-focus-sub">هذه الصفحة تعرض الشغل الذي يحتاج قراراً أو متابعة فعلية الآن — بما فيه العملاء القدامى الذين لم نسجل لهم تواصلاً بشرياً بعد.</div></div></div>
+<div class="dash-focus-head"><div><div class="dash-focus-title">🎯 ماذا يحتاج شغلك الآن؟</div><div class="dash-focus-sub">ابدأ بالمهام العاجلة، ثم راجع مؤشرات العملاء والعقارات التي تحتاج إجراء.</div></div></div>
 
 <div class="card" id="dashTasksCard"><div class="card-head"><div class="card-title"><span>⏰</span>المهام العاجلة أولاً</div><a class="auth-link" style="font-size:12px" onclick="navigate('daily',null)">عرض الكل ←</a></div><div id="dashTasksList"><div class="empty"><div class="loader-spinner"></div></div></div></div>
 
-<div id="fueContainer"></div>
-
 <div class="dash-kpi-grid">
-  <div class="dash-kpi good" onclick="openClientsDashboardFilter('uncontacted')"><div class="dash-kpi-num" id="statNewLeadsToday">0</div><div class="dash-kpi-label">📞 لم يتم التواصل معهم</div><div class="dash-kpi-hint">يشمل القديم والجديد حتى تتم معالجته</div></div>
-  <div class="dash-kpi danger" onclick="openClientsDashboardFilter('due')"><div class="dash-kpi-num" id="statFollowupsDue">0</div><div class="dash-kpi-label">⏰ متابعة اليوم / متأخرة</div><div class="dash-kpi-hint">أولوية التنفيذ اليوم</div></div>
+  <div class="dash-kpi good" onclick="openClientsDashboardFilter('uncontacted')"><div class="dash-kpi-num" id="statNewLeadsToday">0</div><div class="dash-kpi-label">📞 تواصل غير موثّق</div><div class="dash-kpi-hint">افتح العميل لتأكيد تواصل سابق أو تسجيل الرد</div></div>
+  <div class="dash-kpi danger" onclick="openClientsDashboardFilter('due')"><div class="dash-kpi-num" id="statFollowupsDue">0</div><div class="dash-kpi-label">⏰ متابعة اليوم / متأخرة</div><div class="dash-kpi-hint">بحسب الموعد المسجل في الطلب؛ حدّثه بعد المتابعة</div></div>
   <div class="dash-kpi warn" onclick="openClientsDashboardFilter('hotfocus')"><div class="dash-kpi-num" id="statHotClients">0</div><div class="dash-kpi-label">🔥 فرص حارة نشطة</div><div class="dash-kpi-hint">نشاط حديث أو متابعة محددة — اضغط لفتحهم</div></div>
   <div class="dash-kpi info" onclick="openDashboardViewings('today')"><div class="dash-kpi-num" id="statViewingsToday">0</div><div class="dash-kpi-label">👁 زيارات اليوم</div><div class="dash-kpi-hint">افتح جدول الزيارات</div></div>
   <div class="dash-kpi gold" onclick="openDashboardDeals()"><div class="dash-kpi-num" id="statOpenDeals">0</div><div class="dash-kpi-label">🤝 صفقات مفتوحة</div><div class="dash-kpi-hint">ادخل على خط الإغلاق</div></div>
@@ -2297,7 +2295,7 @@ function goToEndingDeposits(){
 function sameLocalDay(value,dayStr){if(!value)return false;try{return toLocalDateStr(new Date(value))===dayStr}catch(e){return false}}
 function withinDays(value,days){if(!value)return false;var t=new Date(value).getTime();if(!Number.isFinite(t))return false;var diff=Date.now()-t;return diff>=0&&diff<=days*86400000}
 window.dashboardClientFilters={uncontacted:[],due:[],hotfocus:[]};
-function clientDashboardFilterLabel(mode){return ({uncontacted:'لم يتم التواصل معهم',today:'عملاء جدد اليوم',due:'متابعة اليوم / متأخرة',hotfocus:'فرص حارة نشطة'})[mode]||''}
+function clientDashboardFilterLabel(mode){return ({uncontacted:'تواصل غير موثّق',today:'عملاء جدد اليوم',due:'متابعة اليوم / متأخرة',hotfocus:'فرص حارة نشطة'})[mode]||''}
 function openClientsDashboardFilter(mode){
   clientRoleFilter=mode;
   window.clientSmartFilter={text:'',type:'',area:'',budget:null};
@@ -2342,8 +2340,7 @@ async function loadDashboard(){
     const dashboardTasks=rs[3]||[];allTasks=allTasks.filter(t=>t.done).concat(dashboardTasks);renderDashTasks(dashboardTasks);
     const tCount=dashboardTasks.length;
     if($('navTasksCount')){if(tCount){$('navTasksCount').textContent=tCount;$('navTasksCount').style.display=''}else{$('navTasksCount').style.display='none'}}
-    try{await refreshFollowUpEngine();}catch(e){console.warn('[Dashboard focus]',e)}
-  }catch(err){console.error('Dashboard error:',err);if($('fueContainer'))$('fueContainer').innerHTML='<div class="wa-inbox-error">تعذر تحديث لوحة العمل: '+escapeHtml(err.message||String(err))+' <button class="btn-secondary" onclick="loadDashboard()">إعادة المحاولة</button></div>'}
+  }catch(err){console.error('Dashboard error:',err);showToast('تعذر تحديث لوحة العمل: '+(err.message||String(err)),'error')}
 }
 function renderDashTasks(tasks){var card=$('dashTasksCard');if(!tasks.length){if(card)card.style.display='none';$('dashTasksList').innerHTML='';return}if(card)card.style.display='';let h='';tasks.forEach(function(t){const d=daysUntil(t.due_date);const ov=d!==null&&d<0,td=d===0;h+='<div class="task-item"><div class="task-check '+(t.done?'done':'')+'" onclick="toggleTask(\''+t.id+'\','+(!t.done)+')">'+(t.done?'✓':'')+'</div><div class="task-content"><div class="task-title">'+escapeHtml(t.title)+'</div><div class="task-meta">'+(t.due_date?'<span class="task-due '+(ov?'overdue':'')+'">📅 '+(ov?'متأخّرة '+(-d)+' يوم':td?'اليوم':'بعد '+d+' يوم')+'</span>':'')+'<span class="task-priority tp-'+(t.priority==='high'?'high':t.priority==='low'?'low':'med')+'">'+(t.priority==='high'?'🔴 عاجلة':t.priority==='low'?'⚪ منخفضة':'🟡 متوسطة')+'</span></div></div></div>'});$('dashTasksList').innerHTML=h}
 function renderDashHot(clients){if(!clients.length){$('dashHotList').innerHTML='<div class="empty" style="padding:25px"><div class="empty-ico" style="font-size:32px">🔥</div><div class="empty-desc">لا يوجد عملاء حارون الآن</div></div>';return}let h='<div style="padding:6px 0">';clients.forEach(function(c){h+='<div style="padding:12px 18px;border-bottom:1px solid var(--cream-dark);display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="viewClient(\''+c.id+'\')"><div><div style="font-weight:700;font-size:13px;color:var(--espresso)">'+escapeHtml(c.name)+'</div><div style="font-size:11px;color:var(--umber);margin-top:2px">'+escapeHtml(c.preferred_area||'—')+' · '+(clientTypeAr(c.client_type)||'')+'</div></div><div style="font-size:12px;color:var(--gold);font-weight:700">'+(c.budget_max?fmtMoneyShort(c.budget_max):'فتح العميل ←')+'</div></div>'});$('dashHotList').innerHTML=h+'</div>'}
@@ -2448,7 +2445,7 @@ else if(clientRoleFilter==='uncontacted'){var idsNoContact=new Set((window.dashb
 else if(clientRoleFilter==='followup')filtered=allClients.filter(c=>needsFollowup(c));
 else if(clientRoleFilter==='unassigned')filtered=allClients.filter(c=>!c.assigned_to);
 else if(clientRoleFilter==='today'){var dToday=toLocalDateStr(new Date());filtered=allClients.filter(c=>sameLocalDay(c.created_at,dToday));}
-else if(clientRoleFilter==='due'){var idsDue=new Set((window.dashboardClientFilters&&window.dashboardClientFilters.due)||[]);if(idsDue.size)filtered=allClients.filter(c=>idsDue.has(c.id));else{var dDue=toLocalDateStr(new Date());filtered=allClients.filter(c=>c.next_followup&&c.next_followup<=dDue);}}
+else if(clientRoleFilter==='due'){var idsDue=new Set((window.dashboardClientFilters&&window.dashboardClientFilters.due)||[]);filtered=allClients.filter(c=>idsDue.has(c.id));}
 var customLabel=clientDashboardFilterLabel(clientRoleFilter);$('clientsSub').textContent=filtered.length+' عميل'+(customLabel?' · '+customLabel:'')+(isAgent()?' (عملائي)':'');// تطبيق البحث الذكي
 if(window.clientSmartFilter&&(window.clientSmartFilter.text||window.clientSmartFilter.type||window.clientSmartFilter.area||window.clientSmartFilter.budget!=null)){
 filtered=filtered.filter(matchesClientSmartFilter);
