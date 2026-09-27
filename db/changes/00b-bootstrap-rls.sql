@@ -21,7 +21,9 @@ BEGIN;
 -- their most recently active client_request assignment. Trigger-only, no
 -- direct client-facing write path (matches 01-security's comment).
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION public.crm_refresh_client_primary_assignment(p_client_id uuid, p_company_id uuid)
+-- Parameter order is (company_id, client_id) to match how 07-manual-assignment.forward.sql
+-- calls it (perform public.crm_refresh_client_primary_assignment(new.company_id,new.client_id)).
+CREATE OR REPLACE FUNCTION public.crm_refresh_client_primary_assignment(p_company_id uuid, p_client_id uuid)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
 AS $$
 DECLARE v_agent uuid;
@@ -40,6 +42,7 @@ BEGIN
 END;
 $$;
 REVOKE ALL ON FUNCTION public.crm_refresh_client_primary_assignment(uuid,uuid) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.crm_refresh_client_primary_assignment(uuid,uuid) TO service_role, authenticated;
 
 -- ----------------------------------------------------------------------------
 -- Enable RLS everywhere
