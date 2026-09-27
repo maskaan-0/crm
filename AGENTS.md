@@ -8,4 +8,4 @@ Verify actual account connections and runtime access each time; this document ca
 
 Preserve real client/property data. Prefer reversible changes and backups. Do not send customer WhatsApp/Instagram/Facebook messages, publish social content, spend on ads, or permanently delete production data unless the user specifically requests the action. Do not infer approval for a new external communication from general CRM access.
 
-Project: `omanvilla/habib-crm`; Supabase project `dmsckqjkcnsfmnzfjczz`. Do not store tokens, passwords, or secret values here.
+Project: `omanvilla/habib-crm`; Supabase project `bdllokupbezfqupinzsf`. Do not store tokens, passwords, or secret values here.
