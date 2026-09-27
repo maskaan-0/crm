@@ -11,15 +11,21 @@
 -- etc.) are lower-confidence: named/FK'd by triggers and code but their full
 -- column lists were not exhaustively extracted. Marked with [VERIFY].
 --
--- ORDER OF OPERATIONS FOR FULL BOOTSTRAP:
---   1. This file (00-bootstrap-schema.sql)
---   2. db/changes/01-security.forward.sql  through  08-storage.forward.sql (in numeric order)
---   3. db/changes/financial-01-financial-views.forward.sql, financial-02-financial-lockdown.forward.sql
---   4. db/changes/conversation-forward.sql, conversation-sequence-backfill.sql, conversation-cutover-guard.sql
---   5. db/changes/instagram-conversation-forward.sql, instagram-send-forward.sql
---   6. db/changes/funnel-forward.sql, funnel-metrics.sql
---   7. db/changes/edge-support-forward.sql
---   8. Seed rejection_reasons catalog (see bottom of this file)
+-- ORDER OF OPERATIONS FOR FULL BOOTSTRAP (verified end-to-end 2026-09-27
+-- against project bdllokupbezfqupinzsf):
+--   1. This file (00-bootstrap-schema.sql) -- includes seeding rejection_reasons
+--   2. db/changes/00b-bootstrap-rls.sql
+--   3. db/changes/01-security.forward.sql  through  08-storage.forward.sql (in numeric order)
+--   4. db/changes/09-schema-gap-fixes.sql -- REQUIRED: columns/tables/functions
+--      the files below assume already exist but that this reconstructed
+--      bootstrap didn't originally include; discovered by actually running
+--      each file against a live database
+--   5. db/changes/financial-01-financial-views.forward.sql, financial-02-financial-lockdown.forward.sql
+--   6. db/changes/conversation-forward.sql, conversation-sequence-backfill.sql, conversation-cutover-guard.sql
+--   7. db/changes/instagram-conversation-forward.sql, instagram-send-forward.sql
+--   8. db/changes/funnel-forward.sql, funnel-metrics.sql
+--   9. db/changes/edge-support-forward.sql
+--  10. db/changes/10-security-advisor-fixes.sql
 -- ============================================================================
 
 BEGIN;
