@@ -31,7 +31,7 @@ function b64ToBytes(value: string) {
 }
 
 async function credentialKey(companyId: string, accountId: string) {
-  const seed = new TextEncoder().encode(`${META_APP_SECRET}|${companyId}|${accountId}|habib-crm-instagram-v1`);
+  const seed = new TextEncoder().encode(`${META_APP_SECRET}|${companyId}|${accountId}|maskaan0-crm-instagram-v1`);
   const digest = await crypto.subtle.digest("SHA-256", seed);
   return crypto.subtle.importKey("raw", digest, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
 }

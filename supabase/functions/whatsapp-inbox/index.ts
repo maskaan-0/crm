@@ -57,7 +57,7 @@ function imageDataUrl(bytes: Uint8Array, mime: string) {
 }
 async function decryptMediaToken(ciphertext: string, iv: string, companyId: string, routeKey: string) {
   const decode = (value:string)=>Uint8Array.from(atob(value),c=>c.charCodeAt(0));
-  const seed = new TextEncoder().encode(`${META_APP_SECRET}|${companyId}|${routeKey}|habib-crm-whatsapp-v1`);
+  const seed = new TextEncoder().encode(`${META_APP_SECRET}|${companyId}|${routeKey}|maskaan0-crm-whatsapp-v1`);
   const digest = await crypto.subtle.digest("SHA-256",seed);
   const key = await crypto.subtle.importKey("raw",digest,{name:"AES-GCM"},false,["decrypt"]);
   return new TextDecoder().decode(await crypto.subtle.decrypt({name:"AES-GCM",iv:decode(iv)},key,decode(ciphertext)));

@@ -137,7 +137,7 @@
     crypto.getRandomValues(stateBytes);
     var state = Array.from(stateBytes).map(function (value) { return value.toString(16).padStart(2, '0'); }).join('');
     sessionStorage.setItem('instagram_oauth_state', state);
-    var redirect = 'https://omanvilla.github.io/habib-crm/';
+    var redirect = 'https://maskaan-0.github.io/crm/';
     var scope = 'pages_show_list,pages_read_engagement,instagram_basic,instagram_manage_insights';
     var url = 'https://www.facebook.com/v25.0/dialog/oauth?client_id=1639659247753419&redirect_uri=' + encodeURIComponent(redirect) + '&response_type=token&auth_type=rerequest&return_scopes=true&scope=' + encodeURIComponent(scope) + '&state=' + encodeURIComponent(state);
     showToast('🔗 جاري فتح موافقة Meta لربط @omanvilla', 'info');

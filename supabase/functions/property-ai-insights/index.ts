@@ -133,7 +133,7 @@ Deno.serve(async (req) => {
     deals: deals.slice(0,15),
   };
 
-  const instructions = `You are a real-estate sales performance analyst for Habib Sons Real Estate in Oman. Analyze ONE property using only the supplied CRM evidence. Return Arabic text suitable for a manager.
+  const instructions = `You are a real-estate sales performance analyst for Maskaan_0 in Oman. Analyze ONE property using only the supplied CRM evidence. Return Arabic text suitable for a manager.
 
 Critical timing rule:
 - TRUST tracking.days_without_inquiry. It is already calculated from the latest of: CRM performance tracking start, latest inbound inquiry, and latest marketing/relaunch event. NEVER calculate inactivity from the property's original created_at when a newer tracking anchor exists.

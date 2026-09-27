@@ -5,7 +5,7 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "
 const CRM_COMPANY_ID = Deno.env.get("CRM_COMPANY_ID") ?? "";
 const META_APP_SECRET = Deno.env.get("META_APP_SECRET") ?? "";
 const META_GRAPH_VERSION = Deno.env.get("META_GRAPH_VERSION") || "v25.0";
-const INSTAGRAM_VERIFY_TOKEN = Deno.env.get("INSTAGRAM_VERIFY_TOKEN") || "habib-crm-instagram-webhook-2026";
+const INSTAGRAM_VERIFY_TOKEN = Deno.env.get("INSTAGRAM_VERIFY_TOKEN") || "maskaan0-crm-instagram-webhook-2026";
 
 const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
 const encoder = new TextEncoder();
@@ -46,7 +46,7 @@ function b64ToBytes(value: string) {
 }
 
 async function decryptToken(ciphertext: string, ivB64: string, companyId: string, accountId: string) {
-  const seed = encoder.encode(`${META_APP_SECRET}|${companyId}|${accountId}|habib-crm-instagram-v1`);
+  const seed = encoder.encode(`${META_APP_SECRET}|${companyId}|${accountId}|maskaan0-crm-instagram-v1`);
   const digest = await crypto.subtle.digest("SHA-256", seed);
   const key = await crypto.subtle.importKey("raw", digest, { name: "AES-GCM" }, false, ["decrypt"]);
   const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64ToBytes(ivB64) }, key, b64ToBytes(ciphertext));

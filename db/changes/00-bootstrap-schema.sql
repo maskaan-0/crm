@@ -1,5 +1,5 @@
 -- ============================================================================
--- DRAFT bootstrap schema for Habib/Maskaan CRM (Supabase project dmsckqjkcnsfmnzfjczz)
+-- DRAFT bootstrap schema for Maskaan_0 CRM (Supabase project dmsckqjkcnsfmnzfjczz)
 -- Generated 2026-09-27 by reverse-engineering app-base-v15.html, crm-*.js,
 -- supabase/functions/*, and db/changes/*.forward.sql (which are PATCHES that
 -- assume this base schema already exists -- they must be run AFTER this file).
