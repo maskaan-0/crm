@@ -1,7 +1,36 @@
 BEGIN;
 SET LOCAL lock_timeout='5s';
-ALTER TABLE public.client_requests ADD COLUMN manual_assigned_to uuid REFERENCES public.profiles(id);
-CREATE INDEX client_requests_manual_assigned_to_fk_idx ON public.client_requests(manual_assigned_to) WHERE manual_assigned_to IS NOT NULL;
+-- manual_assigned_to and its index are already created by 00-bootstrap-schema.sql
+
+-- crm_infer_request_branches() is a BEST-EFFORT reconstruction -- the original
+-- wilayat-to-branch geography mapping was in a private backup not present in
+-- this repo. Only "Barka" wilayat routes to the barka branch; everything else
+-- defaults to muscat. Correct this list once the real Barka-branch wilayat
+-- set is known.
+CREATE OR REPLACE FUNCTION public.crm_infer_request_branches(
+  p_route_key text, p_branch_key text, p_wilayat text,
+  p_preferred_area text, p_preferred_areas text[], p_alternative_areas text[]
+) RETURNS text[] LANGUAGE plpgsql IMMUTABLE SET search_path = ''
+AS $$
+DECLARE v_areas text[]; v_result text[] := '{}'; v_a text;
+BEGIN
+  IF p_route_key = 'investment' OR p_branch_key = 'investment' THEN
+    RETURN ARRAY['investment'];
+  END IF;
+  v_areas := ARRAY[coalesce(p_wilayat,''), coalesce(p_preferred_area,'')]
+    || coalesce(p_preferred_areas,'{}'::text[]) || coalesce(p_alternative_areas,'{}'::text[]);
+  FOREACH v_a IN ARRAY v_areas LOOP
+    IF v_a ILIKE '%barka%' OR v_a ILIKE '%بركاء%' THEN
+      v_result := array_append(v_result, 'barka');
+    ELSIF v_a <> '' THEN
+      v_result := array_append(v_result, 'muscat');
+    END IF;
+  END LOOP;
+  v_result := ARRAY(SELECT DISTINCT unnest(v_result));
+  RETURN v_result;
+END;
+$$;
+
 ALTER TABLE public.client_request_assignees DROP CONSTRAINT client_request_assignees_branch_key_check;
 ALTER TABLE public.client_request_assignees ADD CONSTRAINT client_request_assignees_branch_key_check
   CHECK(branch_key IN('muscat','barka','investment','general'));
@@ -112,11 +141,11 @@ end;
 $function$
 ;
 
-DROP TRIGGER trg_assign_request_geography ON public.client_requests;
+DROP TRIGGER IF EXISTS trg_assign_request_geography ON public.client_requests;
 CREATE TRIGGER trg_assign_request_geography BEFORE INSERT OR UPDATE OF route_key,branch_key,wilayat,
   preferred_area,preferred_areas,alternative_areas,status,manual_assigned_to ON public.client_requests
   FOR EACH ROW EXECUTE FUNCTION public.crm_set_request_geography();
-DROP TRIGGER trg_sync_request_assignees ON public.client_requests;
+DROP TRIGGER IF EXISTS trg_sync_request_assignees ON public.client_requests;
 CREATE TRIGGER trg_sync_request_assignees AFTER INSERT OR UPDATE OF route_key,branch_key,wilayat,
   preferred_area,preferred_areas,alternative_areas,status,assigned_to,manual_assigned_to ON public.client_requests
   FOR EACH ROW EXECUTE FUNCTION public.crm_sync_request_assignees();
