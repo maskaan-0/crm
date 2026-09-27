@@ -809,6 +809,37 @@ CREATE TABLE public.appointments (
 );
 ALTER TABLE public.viewings ADD CONSTRAINT viewings_appointment_id_fkey FOREIGN KEY (appointment_id) REFERENCES public.appointments(id);
 
+-- activities (audit/timeline log; referenced by crm_save_viewing_atomic() in
+-- 03-atomic-visits.forward.sql and by logActivity()/logAudit() in the frontend)
+CREATE TABLE public.activities (
+  id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id     uuid NOT NULL REFERENCES public.companies(id),
+  user_id        uuid REFERENCES public.profiles(id),
+  client_id      uuid REFERENCES public.clients(id),
+  deal_id        uuid REFERENCES public.deals(id),
+  property_id    uuid REFERENCES public.properties(id),
+  request_id     uuid REFERENCES public.client_requests(id),
+  appointment_id uuid REFERENCES public.appointments(id),
+  type           text,
+  description    text,
+  activity_type  text,
+  activity_text  text,
+  channel        text,
+  direction      text,
+  actor_type     text,
+  occurred_at    timestamptz,
+  recorded_at    timestamptz,
+  after_data     jsonb,
+  created_at     timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX activities_company_id_idx ON public.activities(company_id);
+CREATE INDEX activities_client_id_idx ON public.activities(client_id) WHERE client_id IS NOT NULL;
+ALTER TABLE public.activities ENABLE ROW LEVEL SECURITY;
+CREATE POLICY activities_select_company ON public.activities FOR SELECT TO authenticated
+USING (company_id = (SELECT public.my_company()));
+CREATE POLICY activities_insert_staff ON public.activities FOR INSERT TO authenticated
+WITH CHECK (company_id = (SELECT public.my_company()));
+
 CREATE TABLE public.appointment_properties (
   id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   appointment_id uuid NOT NULL REFERENCES public.appointments(id) ON DELETE CASCADE,
