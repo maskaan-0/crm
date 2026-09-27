@@ -114,12 +114,16 @@ Deno.serve(async (req) => {
       .select("route_key,owner_only_inbox").eq("company_id", companyId);
     if (routesR.error) throw new Error(`route_access_failed: ${routesR.error.message}`);
     const ownerOnly = new Set((routesR.data || []).filter((r:any)=>r.owner_only_inbox===true).map((r:any)=>String(r.route_key)));
+    const staffR=await admin.from("profiles").select("phone").eq("company_id",companyId).eq("is_active",true);
+    if(staffR.error)throw new Error("internal_contacts_unavailable");
+    const internalWaIds=new Set((staffR.data||[]).map((p:any)=>{const digits=String(p.phone||"").replace(/\D/g,"");return digits.length===8?"968"+digits:digits.startsWith("00")?digits.slice(2):digits}).filter((phone:string)=>phone.length>=8));
 
     async function getConversation(conversationId: string) {
       const r = await userClient.from("whatsapp_conversations").select("*")
         .eq("id", conversationId).eq("company_id", companyId).maybeSingle();
       if (r.error) throw new Error(`conversation_lookup_failed: ${r.error.message}`);
       if (profile.role !== "owner" && ownerOnly.has(String(r.data?.route_key || ""))) return null;
+      if(r.data && internalWaIds.has(String(r.data.customer_wa_id||"").replace(/\D/g,"")))return null;
       return r.data;
     }
     const pageSize = Math.min(300, Math.max(1, Math.floor(Number(payload?.limit) || 100)));
@@ -164,6 +168,7 @@ Deno.serve(async (req) => {
         .select("id,client_id,route_key,assigned_to,meta_phone_number_id,inbound_number,customer_wa_id,customer_phone,customer_name,status,unread_count,last_message_at,last_inbound_at,last_outbound_at,ai_summary,human_handoff_required,handoff_reason,handoff_updated_at,last_automation_action,updated_at")
         .eq("company_id", companyId);
       if (profile.role !== "owner" && ownerOnly.size) q = q.not("route_key", "in", `(${[...ownerOnly].join(",")})`);
+      if(internalWaIds.size)q=q.not("customer_wa_id","in",`(${[...internalWaIds].join(",")})`);
       const r = await q.order("last_message_at", { ascending: false, nullsFirst: false })
         .order("id", { ascending: false }).range(offset, offset + pageSize);
       if (r.error) throw new Error(`conversation_list_failed: ${r.error.message}`);
@@ -181,6 +186,12 @@ Deno.serve(async (req) => {
       const counters = await userClient.rpc("crm_whatsapp_inbox_counts");
       if (counters.error) throw new Error(`inbox_counts_failed: ${counters.error.message}`);
       const counts = Array.isArray(counters.data) ? counters.data[0] : counters.data;
+      if(internalWaIds.size){
+        const hidden=await userClient.from("whatsapp_conversations").select("unread_count,human_handoff_required").eq("company_id",companyId).in("customer_wa_id",[...internalWaIds]);
+        if(hidden.error)throw new Error("internal_counts_failed");
+        counts.unread_total=Math.max(0,Number(counts.unread_total||0)-(hidden.data||[]).reduce((n:any,c:any)=>n+Number(c.unread_count||0),0));
+        counts.handoff_total=Math.max(0,Number(counts.handoff_total||0)-(hidden.data||[]).filter((c:any)=>c.human_handoff_required).length);
+      }
       const previews = await userClient.rpc("crm_whatsapp_latest_messages", { p_conversation_ids: conversations.map((c:any)=>c.id) });
       if (previews.error) throw new Error(`message_previews_failed: ${previews.error.message}`);
       const latestMap: Record<string, any> = {};
@@ -248,16 +259,7 @@ Deno.serve(async (req) => {
       return json({ok:true,request_id:requestId});
     }
 
-    if (action === "mark_read") {
-      const conversationId=String(payload?.conversation_id||"").trim();if(!conversationId)return json({ok:false,error:"conversation_id_required"},400);
-      const conversation=await getConversation(conversationId);if(!conversation)return json({ok:false,error:"conversation_not_found"},404);
-      const throughId=String(payload?.through_message_id||"").trim();
-      if(!throughId)return json({ok:false,error:"read_watermark_required"},400);
-      const ur=await userClient.rpc("crm_mark_whatsapp_read",{p_conversation_id:conversationId,p_message_id:throughId});
-      if(ur.error)throw new Error(`mark_read_failed: ${ur.error.message}`);
-      const result=Array.isArray(ur.data)?ur.data[0]:ur.data;
-      return json({ok:true,unread_count:Number(result?.unread_count||0)});
-    }
+    if (action === "mark_read") return json({ok:false,error:"phone_read_state_not_available"},409);
 
     if (action === "clear_handoff") {
       const conversationId=String(payload?.conversation_id||"").trim();if(!conversationId)return json({ok:false,error:"conversation_id_required"},400);
