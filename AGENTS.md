@@ -1,4 +1,4 @@
-# Working agreement for Habib CRM
+# Working agreement for maskaan_0 CRM
 
 Owner preference recorded 2026-09-27: When Ahmed explicitly requests work on this CRM, its GitHub repository, Supabase project, or connected Instagram/Meta workflow, proceed through inspection, implementation, testing, deployment, and a concise result report without repeatedly asking for approval for the requested work. Use the scope and constraints of the latest request. A request for audit only means no modification.
 
@@ -8,4 +8,4 @@ Verify actual account connections and runtime access each time; this document ca
 
 Preserve real client/property data. Prefer reversible changes and backups. Do not send customer WhatsApp/Instagram/Facebook messages, publish social content, spend on ads, or permanently delete production data unless the user specifically requests the action. Do not infer approval for a new external communication from general CRM access.
 
-Project: `omanvilla/habib-crm`; Supabase project `dmsckqjkcnsfmnzfjczz`. Do not store tokens, passwords, or secret values here.
+Project: `maskaan-0/maskaan_0-crm`; Supabase project `bdllokupbezfqupinzsf`. Do not store tokens, passwords, or secret values here.
