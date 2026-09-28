@@ -2745,7 +2745,7 @@ async function importAwtadProperties(){
         bathrooms:parseInt(row.bathrooms)||null,
         land_size:parseFloat(row.landSize)||null,
         description:String(row.description||'').trim()||null,
-        images:images.length?images:null,
+        images:images,
         status:'available',
         source_type:'agency',
         marketing_status:'ready_to_advertise'
