@@ -111,7 +111,7 @@ window.fbAsyncInit = function(){
 </style>
 
 </head>
-<body><div id="instantLoader" style="position:fixed;inset:0;background:linear-gradient(135deg,#FFF8EC,#F5E9CC);display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:99999;direction:rtl"><div style="width:60px;height:60px;border-radius:14px;background:linear-gradient(135deg,#C49A4A,#A87B30);display:flex;align-items:center;justify-content:center;color:white;font-size:30px;margin-bottom:16px;box-shadow:0 8px 24px rgba(196,154,74,0.3)">⌘</div><div style="color:#5C4A2A;font-size:14px;font-weight:600">جاري التحميل...</div></div><script>setTimeout(function(){var l=document.getElementById('instantLoader');if(l)l.style.display='none'},2500);</script>
+<body><div id="instantLoader" style="position:fixed;inset:0;background:linear-gradient(135deg,#FFF8EC,#F5E9CC);display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:99999;direction:rtl"><img src="logo.png" alt="Maskaan_0" style="width:60px;height:60px;border-radius:14px;object-fit:cover;margin-bottom:16px;box-shadow:0 8px 24px rgba(196,154,74,0.3)"><div style="color:#5C4A2A;font-size:14px;font-weight:600">جاري التحميل...</div></div><script>setTimeout(function(){var l=document.getElementById('instantLoader');if(l)l.style.display='none'},2500);</script>
 <div id="loaderScreen" class="loader-screen"><div class="loader-spinner"></div><div class="loader-text">جاري تحميل المنصة...</div></div>
 
 <div id="authScreen" class="auth-screen hidden">
@@ -1455,7 +1455,7 @@ async function renderLeadForm(companyId){
   }).join('');
   document.body.innerHTML = '<div class="lead-form-page">'+
     '<div class="lead-form-card">'+
-    '<div class="auth-mark" style="margin:0 auto 14px">⌘</div>'+
+    '<img src="logo.png" alt="Maskaan_0" class="auth-mark" style="width:52px;height:52px;border-radius:12px;object-fit:cover;margin:0 auto 14px">'+
     '<h1>'+companyName+'</h1>'+
     '<div class="subtitle">🏡 خدمات عقارية احترافية</div>'+
     '<div id="leadFormError" class="auth-error" style="display:none"></div>'+
